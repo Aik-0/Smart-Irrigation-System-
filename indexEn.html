@@ -1,0 +1,1730 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Smart Irrigation System</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            background: linear-gradient(135deg, #eef8f1, #f8fbf9);
+            color: #26352b;
+            min-height: 100vh;
+            padding: 25px;
+        }
+
+        .container {
+            max-width: 1250px;
+            margin: auto;
+        }
+
+        /* =========================
+           HEADER
+        ========================= */
+
+        .header {
+            background: linear-gradient(135deg, #1b5e20, #43a047);
+            color: white;
+            padding: 30px;
+            border-radius: 24px;
+            margin-bottom: 25px;
+
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            box-shadow: 0 8px 25px rgba(46,125,50,0.20);
+        }
+
+        .header h1 {
+            font-size: 30px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .system-status {
+            background: rgba(255,255,255,0.18);
+            padding: 12px 18px;
+            border-radius: 15px;
+            white-space: nowrap;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: #b9f6ca;
+            border-radius: 50%;
+            margin-right: 7px;
+        }
+
+        /* =========================
+           SECTION TITLE
+        ========================= */
+
+        .section-title {
+            margin: 28px 5px 15px;
+            font-size: 21px;
+            color: #285b31;
+        }
+
+        /* =========================
+           SENSOR CARDS
+        ========================= */
+
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 22px;
+
+            box-shadow: 0 5px 18px rgba(0,0,0,0.07);
+
+            border: 1px solid #e7eee8;
+
+            transition: 0.25s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.10);
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            margin-bottom: 20px;
+
+            font-size: 17px;
+            font-weight: bold;
+
+            color: #315a3a;
+        }
+
+        .icon {
+            width: 45px;
+            height: 45px;
+
+            border-radius: 14px;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            background: #edf7ef;
+
+            font-size: 24px;
+        }
+
+        .reading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            padding: 14px 0;
+
+            border-bottom: 1px solid #edf1ee;
+        }
+
+        .reading:last-child {
+            border-bottom: none;
+        }
+
+        .reading-name {
+            color: #68736b;
+            font-size: 14px;
+        }
+
+        .reading-value {
+            font-size: 25px;
+            font-weight: bold;
+            color: #2e7d32;
+        }
+
+        .unit {
+            font-size: 13px;
+            color: #7b857e;
+            margin-left: 3px;
+        }
+
+        /* =========================
+           WATER TANK
+        ========================= */
+
+        .water-content {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .water-circle {
+            width: 145px;
+            height: 145px;
+
+            border-radius: 50%;
+
+            background: conic-gradient(
+                #2196f3 0deg,
+                #e8f1f8 0deg
+            );
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            position: relative;
+
+            flex-shrink: 0;
+        }
+
+        .water-circle::before {
+            content: "";
+
+            position: absolute;
+
+            width: 112px;
+            height: 112px;
+
+            background: white;
+
+            border-radius: 50%;
+        }
+
+        .water-number {
+            position: relative;
+            z-index: 2;
+
+            font-size: 30px;
+            font-weight: bold;
+
+            color: #1976d2;
+        }
+
+        .water-info {
+            flex: 1;
+            text-align: left;
+        }
+
+        .water-info h3 {
+            margin-bottom: 8px;
+            color: #285b31;
+        }
+
+        .water-info p {
+            color: #69746d;
+            line-height: 1.8;
+            font-size: 14px;
+        }
+
+        .water-alert {
+            margin-top: 18px;
+
+            padding: 14px 18px;
+
+            border-radius: 13px;
+
+            display: none;
+
+            font-weight: bold;
+        }
+
+        .water-alert.warning {
+            display: block;
+            background: #fff5df;
+            color: #a56600;
+        }
+
+        .water-alert.danger {
+            display: block;
+            background: #ffe8e8;
+            color: #c62828;
+        }
+
+        /* =========================
+           SMART LOCATION SECTION
+        ========================= */
+
+        .smart-card {
+            background: white;
+
+            border-radius: 22px;
+
+            padding: 25px;
+
+            box-shadow: 0 5px 18px rgba(0,0,0,0.07);
+
+            border: 1px solid #e7eee8;
+        }
+
+        .smart-grid {
+            display: grid;
+
+            grid-template-columns: repeat(4, 1fr);
+
+            gap: 15px;
+
+            margin-bottom: 22px;
+        }
+
+        .smart-item {
+            background: #f7faf7;
+
+            padding: 18px;
+
+            border-radius: 16px;
+
+            text-align: center;
+        }
+
+        .smart-icon {
+            font-size: 27px;
+            margin-bottom: 8px;
+        }
+
+        .smart-label {
+            color: #7a847c;
+            font-size: 12px;
+            margin-bottom: 7px;
+        }
+
+        .smart-value {
+            color: #2e7d32;
+            font-size: 19px;
+            font-weight: bold;
+        }
+
+        /* =========================
+           SMART RECOMMENDATION
+        ========================= */
+
+        .recommendation {
+            background: linear-gradient(
+                135deg,
+                #edf8ef,
+                #f6fbf7
+            );
+
+            border: 1px solid #d8ecd9;
+
+            border-radius: 18px;
+
+            padding: 20px;
+        }
+
+        .recommendation-title {
+            color: #2e7d32;
+
+            font-size: 19px;
+
+            font-weight: bold;
+
+            margin-bottom: 10px;
+        }
+
+        .recommendation-status {
+            font-size: 24px;
+
+            font-weight: bold;
+
+            color: #285b31;
+
+            margin-bottom: 8px;
+        }
+
+        .recommendation-action {
+            color: #4d6252;
+
+            font-size: 14px;
+
+            margin-bottom: 12px;
+        }
+
+        .recommendation-reason {
+            color: #69746d;
+
+            font-size: 13px;
+
+            line-height: 1.8;
+        }
+
+        /* =========================
+           PLANT SECTION
+        ========================= */
+
+        .plant-card {
+            background: white;
+
+            border-radius: 22px;
+
+            padding: 25px;
+
+            box-shadow: 0 5px 18px rgba(0,0,0,0.07);
+        }
+
+        .plant-header {
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            margin-bottom: 22px;
+        }
+
+        .plant-name {
+            font-size: 23px;
+
+            color: #2e7d32;
+
+            font-weight: bold;
+        }
+
+        .plant-description {
+            color: #7b857e;
+
+            font-size: 13px;
+
+            margin-top: 5px;
+        }
+
+        .healthy-badge {
+            background: #e8f5e9;
+
+            color: #2e7d32;
+
+            padding: 9px 14px;
+
+            border-radius: 20px;
+
+            font-size: 13px;
+
+            font-weight: bold;
+        }
+
+        /* =========================
+           WATERING STATS
+        ========================= */
+
+        .plant-stats {
+            display: grid;
+
+            grid-template-columns: repeat(4, 1fr);
+
+            gap: 15px;
+        }
+
+        .stat {
+            background: #f7faf7;
+
+            padding: 18px;
+
+            border-radius: 16px;
+
+            text-align: center;
+        }
+
+        .stat-icon {
+            font-size: 25px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 22px;
+
+            font-weight: bold;
+
+            color: #2e7d32;
+
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+
+            color: #7a847c;
+        }
+
+        /* =========================
+           PROGRESS BAR
+        ========================= */
+
+        .progress-area {
+            margin-top: 22px;
+        }
+
+        .progress-top {
+            display: flex;
+
+            justify-content: space-between;
+
+            margin-bottom: 8px;
+
+            font-size: 14px;
+        }
+
+        .progress {
+            width: 100%;
+
+            height: 12px;
+
+            background: #e8eee9;
+
+            border-radius: 20px;
+
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+
+            width: 0%;
+
+            background: linear-gradient(
+                90deg,
+                #43a047,
+                #81c784
+            );
+
+            border-radius: 20px;
+
+            transition: width 0.5s ease;
+        }
+
+        /* =========================
+           SYSTEM MESSAGE
+        ========================= */
+
+        .system-message {
+            margin-top: 20px;
+
+            background: #edf8ef;
+
+            border: 1px solid #d6edd9;
+
+            border-radius: 16px;
+
+            padding: 18px;
+
+            color: #2e6d38;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+        }
+
+        .check {
+            width: 38px;
+
+            height: 38px;
+
+            background: #43a047;
+
+            color: white;
+
+            border-radius: 50%;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            font-size: 20px;
+
+            flex-shrink: 0;
+        }
+
+        /* =========================
+           FOOTER
+        ========================= */
+
+        .footer {
+            text-align: center;
+
+            margin-top: 25px;
+
+            color: #89938c;
+
+            font-size: 12px;
+        }
+
+        /* =========================
+           RESPONSIVE
+        ========================= */
+
+        @media (max-width: 950px) {
+
+            .sensor-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .smart-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .plant-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+
+            body {
+                padding: 15px;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .water-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .water-info {
+                text-align: center;
+            }
+
+            .plant-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .smart-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .plant-stats {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <div class="header">
+
+        <div>
+
+            <h1>
+                🌱 Smart Irrigation System
+            </h1>
+
+            <p>
+                Smart monitoring for plant, irrigation, and surrounding environment
+            </p>
+
+        </div>
+
+
+        <div class="system-status">
+
+            <span class="status-dot"></span>
+
+            System Active
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         SENSOR READINGS
+    ====================================================== -->
+
+    <h2 class="section-title">
+
+        📊 Sensor Readings
+
+    </h2>
+
+
+    <div class="sensor-grid">
+
+
+        <!-- =========================
+             SOIL
+        ========================== -->
+
+        <div class="card">
+
+            <div class="card-title">
+
+                <div class="icon">
+                    🌱
+                </div>
+
+                Soil
+
+            </div>
+
+
+            <div class="reading">
+
+                <span class="reading-name">
+                    Soil Moisture
+                </span>
+
+                <span>
+
+                    <span
+                        class="reading-value"
+                        id="soilMoisture">
+
+                        --
+
+                    </span>
+
+                    <span class="unit">
+                        %
+                    </span>
+
+                </span>
+
+            </div>
+
+
+            <div class="reading">
+
+                <span class="reading-name">
+                    Soil Salinity
+                </span>
+
+                <span>
+
+                    <span
+                        class="reading-value"
+                        id="soilSalinity">
+
+                        --
+
+                    </span>
+
+                    <span class="unit">
+                        dS/m
+                    </span>
+
+                </span>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- =========================
+             AIR
+        ========================== -->
+
+        <div class="card">
+
+            <div class="card-title">
+
+                <div class="icon">
+                    🌤️
+                </div>
+
+                Weather Status
+
+            </div>
+
+
+            <div class="reading">
+
+                <span class="reading-name">
+                    Air Humidity
+                </span>
+
+                <span>
+
+                    <span
+                        class="reading-value"
+                        id="airHumidity">
+
+                        --
+
+                    </span>
+
+                    <span class="unit">
+                        %
+                    </span>
+
+                </span>
+
+            </div>
+
+
+            <div class="reading">
+
+                <span class="reading-name">
+                    Temperature
+                </span>
+
+                <span>
+
+                    <span
+                        class="reading-value"
+                        id="temperature">
+
+                        --
+
+                    </span>
+
+                    <span class="unit">
+                        °C
+                    </span>
+
+                </span>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- =========================
+             WATER TANK
+        ========================== -->
+
+        <div class="card">
+
+            <div class="card-title">
+
+                <div class="icon">
+                    💧
+                </div>
+
+                Water Tank
+
+            </div>
+
+
+            <div class="water-content">
+
+
+                <div
+                    class="water-circle"
+                    id="waterCircle">
+
+                    <span class="water-number">
+
+                        <span id="waterLevel">
+                            --
+                        </span>
+
+                        %
+
+                    </span>
+
+                </div>
+
+
+                <div class="water-info">
+
+                    <h3>
+                        Water Level
+                    </h3>
+
+                    <p id="waterText">
+
+                        Checking water level...
+
+                    </p>
+
+                </div>
+
+
+            </div>
+
+
+            <div
+                class="water-alert"
+                id="waterAlert">
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+
+    <!-- =====================================================
+         SMART LOCATION
+    ====================================================== -->
+
+    <h2 class="section-title">
+
+        🧠 Smart Geographic Analysis
+
+    </h2>
+
+
+    <div class="smart-card">
+
+
+        <div class="smart-grid">
+
+
+            <!-- LOCATION -->
+
+            <div class="smart-item">
+
+                <div class="smart-icon">
+                    📍
+                </div>
+
+                <div class="smart-label">
+                    Farm Location
+                </div>
+
+                <div
+                    class="smart-value"
+                    id="location">
+
+                    --
+
+                </div>
+
+            </div>
+
+
+            <!-- ELEVATION -->
+
+            <div class="smart-item">
+
+                <div class="smart-icon">
+                    ⛰️
+                </div>
+
+                <div class="smart-label">
+                    Elevation Above Sea Level
+                </div>
+
+                <div
+                    class="smart-value">
+
+                    <span id="elevation">
+                        --
+                    </span>
+
+                    meters
+
+                </div>
+
+            </div>
+
+
+            <!-- ENVIRONMENT -->
+
+            <div class="smart-item">
+
+                <div class="smart-icon">
+                    🌿
+                </div>
+
+                <div class="smart-label">
+                    Environment Type
+                </div>
+
+                <div
+                    class="smart-value"
+                    id="environment">
+
+                    --
+
+                </div>
+
+            </div>
+
+
+            <!-- CROP -->
+
+            <div class="smart-item">
+
+                <div class="smart-icon">
+                    🌱
+                </div>
+
+                <div class="smart-label">
+                    Crop
+                </div>
+
+                <div
+                    class="smart-value"
+                    id="crop">
+
+                    --
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- =========================
+             RECOMMENDATION
+        ========================== -->
+
+        <div class="recommendation">
+
+
+            <div class="recommendation-title">
+
+                💡 Smart Recommendation
+
+            </div>
+
+
+            <div
+                class="recommendation-status"
+                id="irrigationStatus">
+
+                Analyzing data...
+
+            </div>
+
+
+            <div
+                class="recommendation-action"
+                id="irrigationAction">
+
+                --
+
+            </div>
+
+
+            <div
+                class="recommendation-reason"
+                id="irrigationReason">
+
+                Location, elevation, crop type, and sensor readings are being analyzed to determine the best irrigation recommendation.
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+
+    <!-- =====================================================
+         PLANT INFORMATION
+    ====================================================== -->
+
+    <h2 class="section-title">
+
+        🌿 Plant Information
+
+    </h2>
+
+
+    <div class="plant-card">
+
+
+        <div class="plant-header">
+
+
+            <div>
+
+                <div
+                    class="plant-name"
+                    id="plantName">
+
+                    🌱 Mint Plant
+
+                </div>
+
+
+                <div class="plant-description">
+
+                    Monitoring irrigation and plant care
+
+                </div>
+
+            </div>
+
+
+            <div
+                class="healthy-badge"
+                id="plantStatus">
+
+                ✓ Excellent Condition
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- =========================
+             WATERING STATISTICS
+        ========================== -->
+
+        <div class="plant-stats">
+
+
+            <!-- COUNT -->
+
+            <div class="stat">
+
+                <div class="stat-icon">
+                    💦
+                </div>
+
+                <div
+                    class="stat-value"
+                    id="wateringCount">
+
+                    --
+
+                </div>
+
+                <div class="stat-label">
+
+                    Watering Times Today
+
+                </div>
+
+            </div>
+
+
+            <!-- LAST WATERING -->
+
+            <div class="stat">
+
+                <div class="stat-icon">
+                    🕐
+                </div>
+
+                <div
+                    class="stat-value"
+                    id="lastWatering">
+
+                    --
+
+                </div>
+
+                <div class="stat-label">
+
+                    Last Watering Time
+
+                </div>
+
+            </div>
+
+
+            <!-- DURATION -->
+
+            <div class="stat">
+
+                <div class="stat-icon">
+                    ⏱️
+                </div>
+
+                <div
+                    class="stat-value"
+                    id="wateringDuration">
+
+                    --
+
+                </div>
+
+                <div class="stat-label">
+
+                    Watering Duration
+
+                </div>
+
+            </div>
+
+
+            <!-- SUCCESS -->
+
+            <div class="stat">
+
+                <div class="stat-icon">
+                    📈
+                </div>
+
+                <div
+                    class="stat-value"
+                    id="wateringPercentage">
+
+                    --%
+
+                </div>
+
+                <div class="stat-label">
+
+                    Irrigation Success Rate
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- =========================
+             PLANT WATER NEED
+        ========================== -->
+
+        <div class="progress-area">
+
+
+            <div class="progress-top">
+
+                <span>
+
+                    Plant Water Need Level
+
+                </span>
+
+
+                <strong id="plantNeed">
+
+                    --%
+
+                </strong>
+
+            </div>
+
+
+            <div class="progress">
+
+                <div
+                    class="progress-bar"
+                    id="plantProgress">
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- =========================
+             SYSTEM MESSAGE
+        ========================== -->
+
+        <div class="system-message">
+
+
+            <div class="check">
+                ✓
+            </div>
+
+
+            <div>
+
+                <strong id="statusTitle">
+
+                    Everything is operating correctly
+
+                </strong>
+
+
+                <br>
+
+
+                <span
+                    style="font-size:13px;"
+                    id="statusMessage">
+
+                    The plant, environment, and water level are being continuously monitored.
+
+                </span>
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+
+    <div class="footer">
+
+        Smart Irrigation System © 2026
+        —
+        Smart Irrigation System 🌱
+
+    </div>
+
+
+</div>
+
+
+
+<!-- =====================================================
+     JAVASCRIPT
+====================================================== -->
+
+<script>
+
+
+    // =====================================================
+    // Update Dashboard
+    // =====================================================
+
+    function updateDashboard(data) {
+
+
+        // =========================
+        // Plant Information
+        // =========================
+
+        if (data.plant_name !== undefined) {
+
+            document.getElementById(
+                "plantName"
+            ).innerText =
+                "🌱 " + data.plant_name;
+
+        }
+
+
+        if (data.plant_status !== undefined) {
+
+            document.getElementById(
+                "plantStatus"
+            ).innerText =
+                data.plant_status;
+
+        }
+
+
+        if (data.status_message !== undefined) {
+
+            document.getElementById(
+                "statusMessage"
+            ).innerText =
+                data.status_message;
+
+        }
+
+
+
+        // =========================
+        // Soil
+        // =========================
+
+        if (data.soil_moisture !== undefined) {
+
+            document.getElementById(
+                "soilMoisture"
+            ).innerText =
+                data.soil_moisture;
+
+        }
+
+
+        if (data.soil_salinity !== undefined) {
+
+            document.getElementById(
+                "soilSalinity"
+            ).innerText =
+                data.soil_salinity;
+
+        }
+
+
+
+        // =========================
+        // Air
+        // =========================
+
+        if (data.air_humidity !== undefined) {
+
+            document.getElementById(
+                "airHumidity"
+            ).innerText =
+                data.air_humidity;
+
+        }
+
+
+        if (data.temperature !== undefined) {
+
+            document.getElementById(
+                "temperature"
+            ).innerText =
+                data.temperature;
+
+        }
+
+
+
+        // =========================
+        // Tank
+        // =========================
+
+        if (data.water_level !== undefined) {
+
+
+            let level =
+                Number(data.water_level);
+
+
+            document.getElementById(
+                "waterLevel"
+            ).innerText =
+                level;
+
+
+            let degrees =
+                level * 3.6;
+
+
+            document.getElementById(
+                "waterCircle"
+            ).style.background =
+
+                `conic-gradient(
+                    #2196f3 ${degrees}deg,
+                    #e8f1f8 ${degrees}deg
+                )`;
+
+
+            const alert =
+                document.getElementById(
+                    "waterAlert"
+                );
+
+
+            const text =
+                document.getElementById(
+                    "waterText"
+                );
+
+
+            alert.className =
+                "water-alert";
+
+
+            if (level <= 15) {
+
+
+                text.innerText =
+                    "Water level is very low and the tank needs to be refilled.";
+
+
+                alert.innerText =
+                    "⚠️ Alert: Water is almost empty!";
+
+
+                alert.classList.add(
+                    "danger"
+                );
+
+
+            }
+
+
+            else if (level <= 30) {
+
+
+                text.innerText =
+                    "Water is running low, refilling the tank soon is recommended.";
+
+
+                alert.innerText =
+                    "💧 Alert: Low water level.";
+
+
+                alert.classList.add(
+                    "warning"
+                );
+
+
+            }
+
+
+            else {
+
+
+                text.innerText =
+                    "Water level is good and the tank is operating normally.";
+
+            }
+
+        }
+
+
+
+        // =========================
+        // Location Data
+        // =========================
+
+        if (data.location !== undefined) {
+
+            document.getElementById(
+                "location"
+            ).innerText =
+                data.location;
+
+        }
+
+
+        if (data.elevation !== undefined) {
+
+            document.getElementById(
+                "elevation"
+            ).innerText =
+                data.elevation;
+
+        }
+
+
+        if (data.environment !== undefined) {
+
+            document.getElementById(
+                "environment"
+            ).innerText =
+                data.environment;
+
+        }
+
+
+        if (data.crop !== undefined) {
+
+            document.getElementById(
+                "crop"
+            ).innerText =
+                data.crop;
+
+        }
+
+
+
+        // =========================
+        // Smart Recommendation
+        // =========================
+
+        if (data.irrigation_status !== undefined) {
+
+            document.getElementById(
+                "irrigationStatus"
+            ).innerText =
+                data.irrigation_status;
+
+        }
+
+
+        if (data.irrigation_action !== undefined) {
+
+            document.getElementById(
+                "irrigationAction"
+            ).innerText =
+                data.irrigation_action;
+
+        }
+
+
+        if (data.irrigation_reason !== undefined) {
+
+            document.getElementById(
+                "irrigationReason"
+            ).innerText =
+                data.irrigation_reason;
+
+        }
+
+
+
+        // =========================
+        // Watering Information
+        // =========================
+
+        if (data.watering_count !== undefined) {
+
+            document.getElementById(
+                "wateringCount"
+            ).innerText =
+                data.watering_count;
+
+        }
+
+
+        if (data.last_watering !== undefined) {
+
+            document.getElementById(
+                "lastWatering"
+            ).innerText =
+                data.last_watering;
+
+        }
+
+
+        if (data.watering_duration !== undefined) {
+
+            document.getElementById(
+                "wateringDuration"
+            ).innerText =
+                data.watering_duration;
+
+        }
+
+
+        if (data.watering_percentage !== undefined) {
+
+            document.getElementById(
+                "wateringPercentage"
+            ).innerText =
+                data.watering_percentage + "%";
+
+        }
+
+
+
+        // =========================
+        // Plant Need
+        // =========================
+
+        if (data.plant_need !== undefined) {
+
+
+            let level =
+                Number(data.plant_need);
+
+
+            document.getElementById(
+                "plantNeed"
+            ).innerText =
+                level + "%";
+
+
+            document.getElementById(
+                "plantProgress"
+            ).style.width =
+                level + "%";
+
+        }
+
+    }
+
+
+
+    // =====================================================
+    // Fetch Data from Flask
+    // =====================================================
+
+    function getData() {
+
+
+        fetch("/data")
+
+
+            .then(function(response) {
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "An error occurred while connecting to the server"
+                    );
+
+                }
+
+                return response.json();
+
+            })
+
+
+            .then(function(data) {
+
+                updateDashboard(data);
+
+            })
+
+
+            .catch(function(error) {
+
+                console.log(
+                    "Error:",
+                    error
+                );
+
+            });
+
+    }
+
+
+
+    // =====================================================
+    // Initial Fetch
+    // =====================================================
+
+    getData();
+
+
+
+    // =====================================================
+    // Update Data Every Second
+    // =====================================================
+
+    setInterval(
+        getData,
+        1000
+    );
+
+
+</script>
+
+
+</body>
+
+</html>
