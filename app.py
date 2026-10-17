@@ -1,442 +1,282 @@
 import serial
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request
 
 app = Flask(__name__)
 
 
 # =========================================================
-# إعداد الأردوينو
+# إعداد الأردوينو / Arduino Setup
 # =========================================================
 
 ARDUINO_PORT = "COM4"
 BAUD_RATE = 9600
 
 try:
-
     ser = serial.Serial(
         ARDUINO_PORT,
         BAUD_RATE,
         timeout=0.1
     )
-
-    print(
-        f"تم الاتصال بنجاح مع الأردوينو "
-        f"على المنفذ {ARDUINO_PORT}"
-    )
+    print(f"تم الاتصال بنجاح مع الأردوينو على المنفذ {ARDUINO_PORT} / Connected successfully")
 
 except Exception as e:
-
-    print(
-        f"خطأ في الاتصال بالأردوينو: {e}"
-    )
-
+    print(f"خطأ في الاتصال بالأردوينو: {e} / Arduino connection error")
     ser = None
 
 
 # =========================================================
-# معلومات المزرعة
-# =========================================================
-# هذه البيانات تجريبية حاليًا.
-# لاحقًا يمكن ربطها بـ GPS أو خريطة.
+# معلومات المزرعة / Farm Data
 # =========================================================
 
 farm_data = {
-
-    "location": "فيفاء",
+    "location_ar": "فيفاء",
+    "location_en": "Fifaa",
 
     "latitude": 17.25,
-
     "longitude": 43.10,
 
     "elevation": 1800,
 
-    "environment": "جبلية",
+    "environment_ar": "جبلية",
+    "environment_en": "Mountainous",
 
-    "crop": "النعناع"
+    "crop_ar": "النعناع",
+    "crop_en": "Mint"
 }
 
 
 # =========================================================
-# بيانات الحساسات
-# =========================================================
-# water_level حقيقي من الأردوينو.
-#
-# باقي الحساسات غير موجودة حاليًا،
-# لذلك نستخدم قيمًا تجريبية.
+# بيانات الحساسات / Sensor Data
 # =========================================================
 
 sensor_data = {
+    # معلومات النبتة بالعربي والإنجليزي
+    "plant_name_ar": "نبتة النعناع",
+    "plant_name_en": "Mint Plant",
 
-    # معلومات النبتة
+    "plant_status_ar": "✓ بحالة ممتازة",
+    "plant_status_en": "✓ Excellent Condition",
 
-    "plant_name": "نبتة النعناع",
+    "status_message_ar": "تم فحص حالة النبتة، وكل شيء يعمل بشكل صحيح.",
+    "status_message_en": "Plant status checked, everything is functioning properly.",
 
-    "plant_status": "✓ بحالة ممتازة",
-
-    "status_message":
-        "تم فحص حالة النبتة، وكل شيء يعمل بشكل صحيح.",
-
-
-    # -----------------------------------------------------
-    # التربة
-    # -----------------------------------------------------
-
+    # التربة / Soil
     "soil_moisture": 45,
-
     "soil_salinity": 1.2,
 
-
-    # -----------------------------------------------------
-    # الجو
-    # -----------------------------------------------------
-
+    # الجو / Air
     "air_humidity": 55,
-
     "temperature": 26,
 
-
-    # -----------------------------------------------------
-    # الخزان
-    # -----------------------------------------------------
-
+    # الخزان / Water Tank
     "water_level": 0,
 
-
-    # -----------------------------------------------------
-    # معلومات الري
-    # -----------------------------------------------------
-
+    # معلومات الري / Watering Info
     "watering_count": 3,
-
     "last_watering": "10:30 AM",
 
-    "watering_duration": "45 ثانية",
+    "watering_duration_ar": "45 ثانية",
+    "watering_duration_en": "45 seconds",
 
     "watering_percentage": 90,
-
     "plant_need": 35
 }
 
 
 # =========================================================
-# الخوارزمية الذكية
+# الخوارزمية الذكية (ثنائية اللغة) / Smart Algorithm
 # =========================================================
 
-def smart_irrigation():
-
+def smart_irrigation(lang="ar"):
     soil_moisture = sensor_data["soil_moisture"]
-
     temperature = sensor_data["temperature"]
-
-    crop = farm_data["crop"]
-
-    environment = farm_data["environment"]
-
+    crop = farm_data["crop_ar"]
+    environment = farm_data["environment_ar"]
     elevation = farm_data["elevation"]
 
-
-    # -----------------------------------------------------
     # احتياج أساسي حسب المحصول
-    # -----------------------------------------------------
-
     crop_need = {
-
+        "النعناع": 50,
         "نعناع": 50,
-
         "طماطم": 55,
-
         "مانجو": 45,
-
         "موز": 65,
-
         "بن": 40
     }
 
+    base_need = crop_need.get(crop, 50)
 
-    base_need = crop_need.get(
-        crop,
-        50
-    )
-
-
-    # -----------------------------------------------------
     # تأثير رطوبة التربة
-    # -----------------------------------------------------
-
     if soil_moisture < 30:
-
         need = base_need + 25
-
     elif soil_moisture < 45:
-
         need = base_need + 10
-
     elif soil_moisture < 60:
-
         need = base_need
-
     else:
-
         need = base_need - 20
 
-
-    # -----------------------------------------------------
     # تأثير الحرارة
-    # -----------------------------------------------------
-
     if temperature >= 35:
-
         need += 20
-
     elif temperature >= 30:
-
         need += 10
-
     elif temperature <= 20:
-
         need -= 10
 
-
-    # -----------------------------------------------------
     # تأثير البيئة
-    # -----------------------------------------------------
-
     if environment == "جبلية":
-
-        # في المناطق المرتفعة يكون الجو عادةً
-        # أكثر اعتدالًا، لذلك نقلل التوصية قليلًا.
-
         need -= 10
-
-
     elif environment == "ساحلية":
-
-        # في البيئة الساحلية الحارة قد يرتفع
-        # احتياج النبات للماء.
-
         need += 10
 
-
-    # -----------------------------------------------------
     # تأثير الارتفاع
-    # -----------------------------------------------------
-
     if elevation >= 1000:
-
         need -= 5
 
+    # الضبط بين 0 و100
+    need = max(0, min(100, need))
 
-    # -----------------------------------------------------
-    # التأكد أن النسبة بين 0 و100
-    # -----------------------------------------------------
+    # تحديد قرار وسبب الري بناءً على اللغة المطلوبة
+    if lang == "en":
+        if need >= 70:
+            irrigation_status = "Needs Irrigation Now"
+            irrigation_action = "🚿 Turn on Irrigation System"
+        elif need >= 45:
+            irrigation_status = "Needs Irrigation Soon"
+            irrigation_action = "💧 Irrigation Recommended Soon"
+        else:
+            irrigation_status = "No Irrigation Needed"
+            irrigation_action = "✓ Soil Moisture is Optimal"
 
-    need = max(
-        0,
-        min(100, need)
-    )
-
-
-    # -----------------------------------------------------
-    # تحديد قرار الري
-    # -----------------------------------------------------
-
-    if need >= 70:
-
-        irrigation_status = "يحتاج إلى الري الآن"
-
-        irrigation_action = "🚿 تشغيل نظام الري"
-
-    elif need >= 45:
-
-        irrigation_status = "يحتاج إلى ري قريبًا"
-
-        irrigation_action = "💧 يوصى بالري قريبًا"
-
+        reason = (
+            f"Recommendation based on farm location ({farm_data['location_en']}), "
+            f"elevation ({elevation} m), environment ({farm_data['environment_en']}), "
+            f"crop ({farm_data['crop_en']}), temperature ({temperature}°C), "
+            f"and soil moisture ({soil_moisture}%)."
+        )
     else:
+        if need >= 70:
+            irrigation_status = "يحتاج إلى الري الآن"
+            irrigation_action = "🚿 تشغيل نظام الري"
+        elif need >= 45:
+            irrigation_status = "يحتاج إلى ري قريبًا"
+            irrigation_action = "💧 يوصى بالري قريبًا"
+        else:
+            irrigation_status = "لا يحتاج إلى الري حاليًا"
+            irrigation_action = "✓ التربة مناسبة"
 
-        irrigation_status = "لا يحتاج إلى الري حاليًا"
-
-        irrigation_action = "✓ التربة مناسبة"
-
-
-    # -----------------------------------------------------
-    # سبب التوصية
-    # -----------------------------------------------------
-
-    reason = (
-        f"تم تحديد التوصية بناءً على موقع المزرعة "
-        f"({farm_data['location']})، وارتفاعها "
-        f"({elevation} متر)، ونوع البيئة "
-        f"({environment})، ونوع المحصول "
-        f"({crop})، ودرجة الحرارة "
-        f"({temperature}°C)، ورطوبة التربة "
-        f"({soil_moisture}%)."
-    )
-
+        reason = (
+            f"تم تحديد التوصية بناءً على موقع المزرعة ({farm_data['location_ar']})، "
+            f"وارتفاعها ({elevation} متر)، ونوع البيئة ({farm_data['environment_ar']})، "
+            f"ونوع المحصول ({farm_data['crop_ar']})، ودرجة الحرارة ({temperature}°C)، "
+            f"ورطوبة التربة ({soil_moisture}%)."
+        )
 
     return {
-
         "plant_need": need,
-
-        "irrigation_status":
-            irrigation_status,
-
-        "irrigation_action":
-            irrigation_action,
-
-        "irrigation_reason":
-            reason
+        "irrigation_status": irrigation_status,
+        "irrigation_action": irrigation_action,
+        "irrigation_reason": reason
     }
 
 
 # =========================================================
-# الصفحة الرئيسية
+# صفحات الموقع / Web Routes
 # =========================================================
 
+# الصفحة الرئيسية (عربي كافتراضي)
 @app.route("/")
 def index():
+    return render_template("indexAr.html")
 
-    return render_template(
-        "index.html"
-    )
+
+# الصفحة العربية
+@app.route("/ar")
+def index_ar():
+    return render_template("indexAr.html")
+
+
+# الصفحة الإنجليزية
+@app.route("/en")
+def index_en():
+    return render_template("indexEn.html")
 
 
 # =========================================================
-# API البيانات
+# API البيانات / Data API
 # =========================================================
 
 @app.route("/data")
 def get_data():
+    lang = request.args.get("lang", "ar")
 
-    # -----------------------------------------------------
     # قراءة مستوى الماء الحقيقي من Arduino
-    # -----------------------------------------------------
-
     if ser and ser.is_open:
-
         try:
-
             while ser.in_waiting > 0:
-
-                line = ser.readline().decode(
-                    "utf-8",
-                    errors="ignore"
-                ).strip()
-
-
-                # إذا كانت القيمة رقمية
+                line = ser.readline().decode("utf-8", errors="ignore").strip()
 
                 if line.isdigit():
-
                     water_value = int(line)
-
-
-                    # التأكد من أن القيمة بين 0 و100
-
-                    water_value = max(
-                        0,
-                        min(100, water_value)
-                    )
-
-
-                    sensor_data[
-                        "water_level"
-                    ] = water_value
-
+                    water_value = max(0, min(100, water_value))
+                    sensor_data["water_level"] = water_value
 
         except Exception as e:
+            print(f"خطأ أثناء قراءة الأردوينو: {e}")
 
-            print(
-                f"خطأ أثناء قراءة الأردوينو: {e}"
-            )
+    # تشغيل الخوارزمية للغة المحددة
+    irrigation = smart_irrigation(lang=lang)
 
+    # تجهيز الاستجابة بحسب اللغة
+    if lang == "en":
+        response_data = {
+            **sensor_data,
+            "plant_name": sensor_data["plant_name_en"],
+            "plant_status": sensor_data["plant_status_en"],
+            "status_message": sensor_data["status_message_en"],
+            "watering_duration": sensor_data["watering_duration_en"],
+            "location": farm_data["location_en"],
+            "environment": farm_data["environment_en"],
+            "crop": farm_data["crop_en"],
+            "elevation": farm_data["elevation"],
+            "latitude": farm_data["latitude"],
+            "longitude": farm_data["longitude"],
+            **irrigation
+        }
+    else:
+        response_data = {
+            **sensor_data,
+            "plant_name": sensor_data["plant_name_ar"],
+            "plant_status": sensor_data["plant_status_ar"],
+            "status_message": sensor_data["status_message_ar"],
+            "watering_duration": sensor_data["watering_duration_ar"],
+            "location": farm_data["location_ar"],
+            "environment": farm_data["environment_ar"],
+            "crop": farm_data["crop_ar"],
+            "elevation": farm_data["elevation"],
+            "latitude": farm_data["latitude"],
+            "longitude": farm_data["longitude"],
+            **irrigation
+        }
 
-    # -----------------------------------------------------
-    # تشغيل الخوارزمية الذكية
-    # -----------------------------------------------------
-
-    irrigation = smart_irrigation()
-
-
-    # -----------------------------------------------------
-    # دمج بيانات المزرعة مع بيانات الحساسات
-    # -----------------------------------------------------
-
-    response_data = {
-
-        **sensor_data,
-
-        **farm_data,
-
-        **irrigation
-    }
-
-
-    # -----------------------------------------------------
-    # إرسال البيانات إلى الواجهة
-    # -----------------------------------------------------
-
-    return jsonify(
-        response_data
-    )
+    return jsonify(response_data)
 
 
 # =========================================================
-# تشغيل السيرفر
+# تشغيل السيرفر / Run Server
 # =========================================================
 
 if __name__ == "__main__":
-
-    print(
-        "\n======================================"
-    )
-
-    print(
-        "🌱 Smart Irrigation System"
-    )
-
-    print(
-        "======================================"
-    )
-
-    print(
-        "📍 الموقع:",
-        farm_data["location"]
-    )
-
-    print(
-        "⛰️ الارتفاع:",
-        farm_data["elevation"],
-        "متر"
-    )
-
-    print(
-        "🌱 المحصول:",
-        farm_data["crop"]
-    )
-
-    print(
-        "======================================"
-    )
-
-    print(
-        "🌐 افتحي الموقع:"
-    )
-
-    print(
-        "http://127.0.0.1:5000"
-    )
-
-    print(
-        "======================================\n"
-    )
-
+    print("\n======================================")
+    print("🌱 Smart Irrigation System")
+    print("======================================")
+    print("🌐 رابط اللغة العربية:  http://127.0.0.1:5000/ar")
+    print("🌐 English Link:         http://127.0.0.1:5000/en")
+    print("======================================\n")
 
     app.run(
-
         host="127.0.0.1",
-
         port=5000,
-
         debug=False
     )
